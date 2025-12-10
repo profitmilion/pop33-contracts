@@ -24,24 +24,22 @@ async function main() {
 
   console.log("Deployuję z adresu:", wallet.address);
 
-  // 2. Wczytujemy artefakt kontraktu Pop33Demo
-  // Jeśli Twój kontrakt nazywa się inaczej (np. POP33Demo),
-  // podmień poniższe dwie linie:
+  // 2. Wczytujemy artefakt kontraktu Pop33DemoV2
   const artifactPath = path.join(
     __dirname,
     "..",
     "artifacts",
     "contracts",
-    "Pop33Demo.sol",
-    "Pop33Demo.json"
+    "Pop33DemoV2.sol",
+    "Pop33DemoV2.json"
   );
 
   if (!fs.existsSync(artifactPath)) {
     throw new Error(
       `Nie znaleziono artefaktu kontraktu pod ścieżką: ${artifactPath}
 Upewnij się że:
-- plik nazywa się Pop33Demo.sol
-- kontrakt nazywa się Pop33Demo
+- plik nazywa się Pop33DemoV2.sol
+- kontrakt nazywa się Pop33DemoV2
 - wykonałeś: npx hardhat compile`
     );
   }
@@ -55,13 +53,13 @@ Upewnij się że:
     wallet
   );
 
-  console.log("Deployuję kontrakt Pop33Demo na Base Sepolia...");
+  console.log("Deployuję kontrakt Pop33DemoV2 na Base Sepolia...");
 
   const contract = await factory.deploy();
   await contract.waitForDeployment();
 
   const address = await contract.getAddress();
-  console.log("Pop33Demo deployed at:", address);
+  console.log("Pop33DemoV2 deployed at:", address);
 }
 
 main().catch((error) => {

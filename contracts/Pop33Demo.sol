@@ -1,3 +1,4 @@
+// DEPRECATED: old demo stub, do not deploy/use in new versions
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
