@@ -66,73 +66,61 @@ contract Pop33DemoV2 {
     ///         - Jeśli obecny cykl jest pełny lub zamknięty, otwiera nowy.
     ///         - Dodaje użytkownika do bieżącego cyklu.
     function openNextAndJoin() external {
-        require(
-            activeCyclesCount[msg.sender] < MAX_ACTIVE_CYCLES_PER_USER,
-            "Max active cycles reached"
-        );
+    require(
+        activeCyclesCount[msg.sender] < MAX_ACTIVE_CYCLES_PER_USER,
+        "Max active cycles reached"
+    );
 
-        // Upewniamy się, że mamy otwarty cykl, do którego można dołączyć
-        if (
-            totalCycles == 0 ||
-            !cycles[currentCycleId].isOpen ||
-            cycles[currentCycleId].participantsCount >= MAX_PARTICIPANTS_PER_CYCLE
-        ) {
-            _openNewCycle();
-        }
-
-        Cycle storage current = cycles[currentCycleId];
-
-        // Jeszcze raz defensywnie
-        require(current.isOpen, "Current cycle not open");
-        require(
-            current.participantsCount < MAX_PARTICIPANTS_PER_CYCLE,
-            "Current cycle is full"
-        );
-
-        // Zapis joinu globalnie
-        joins.push(
-            Join({
-                user: msg.sender,
-                cycleId: currentCycleId,
-                timestamp: block.timestamp
-            })
-        );
-        uint256 joinId = joins.length - 1;
-
-        // Zapis uczestnika w cyklu
-        participantsByCycle[currentCycleId].push(msg.sender);
-        current.participantsCount += 1;
-
-        emit Joined(currentCycleId, msg.sender, joinId);
-
-        // Jeżeli to jest pierwsze wejście danego usera w ten cykl,
-        // zwiększamy licznik aktywnych cykli i zapisujemy cykl na liście usera.
-        if (_isFirstJoinInCycle(msg.sender, currentCycleId)) {
-            activeCyclesCount[msg.sender] += 1;
-            userCycles[msg.sender].push(currentCycleId);
-        }
-
-        // Jeśli po tym joinie cykl osiągnął max, zamykamy go
-        if (current.participantsCount >= MAX_PARTICIPANTS_PER_CYCLE) {
-            _closeCycle(currentCycleId);
-        }
+    // Upewniamy się, że mamy otwarty cykl, do którego można dołączyć
+    if (
+        totalCycles == 0 ||
+        !cycles[currentCycleId].isOpen ||
+        cycles[currentCycleId].participantsCount >= MAX_PARTICIPANTS_PER_CYCLE
+    ) {
+        _openNewCycle();
     }
 
-    /// @notice Stub do wywołania „losowania” w cyklu (bez rzeczywistego randomness/logiki nagród).
-    ///         - W DEMO możesz po prostu emitować event, ewentualnie zamykać cykl.
-    function runDraw(uint256 cycleId) external {
-        require(cycleId < totalCycles, "Invalid cycleId");
+    Cycle storage current = cycles[currentCycleId];
 
-        bytes32 requestId = keccak256(
-            abi.encodePacked(block.timestamp, msg.sender, cycleId, joins.length)
-        );
-        emit DrawExecuted(cycleId, requestId);
+    // Jeszcze raz defensywnie
+    require(current.isOpen, "Current cycle not open");
+    require(
+        current.participantsCount < MAX_PARTICIPANTS_PER_CYCLE,
+        "Current cycle is full"
+    );
 
-        // Opcjonalnie zamykamy cykl przy losowaniu (jeśli jeszcze otwarty)
-        if (cycles[cycleId].isOpen) {
-            _closeCycle(cycleId);
-        }
+    // Zapis joinu globalnie
+    joins.push(
+        Join({
+            user: msg.sender,
+            cycleId: currentCycleId,
+            timestamp: block.timestamp
+        })
+    );
+    uint256 joinId = joins.length - 1;
+
+    // UWAGA: najpierw sprawdzamy, czy to pierwsze wejście usera w ten cykl
+    bool isFirst = _isFirstJoinInCycle(msg.sender, currentCycleId);
+
+    // Zapis uczestnika w cyklu
+    participantsByCycle[currentCycleId].push(msg.sender);
+    current.participantsCount += 1;
+
+    emit Joined(currentCycleId, msg.sender, joinId);
+
+    // Jeżeli to jest pierwsze wejście danego usera w ten cykl,
+    // zwiększamy licznik aktywnych cykli i zapisujemy cykl na liście usera.
+    if (isFirst) {
+        activeCyclesCount[msg.sender] += 1;
+        userCycles[msg.sender].push(currentCycleId);
     }
+
+    // Jeśli po tym joinie cykl osiągnął max, zamykamy go
+    if (current.participantsCount >= MAX_PARTICIPANTS_PER_CYCLE) {
+        _closeCycle(currentCycleId);
+    }
+}
+
 
     /// @notice Zwraca liczbę wszystkich joinów.
     function totalJoins() external view returns (uint256) {
